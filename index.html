@@ -21,6 +21,10 @@
     background: #000;
     overflow: hidden;
   }
+  .stage {
+    position: fixed;
+    inset: 0;
+  }
   video {
     position: fixed;
     top: 50%;
@@ -29,10 +33,120 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+    cursor: pointer;
+  }
+  .controls {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0));
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: 10;
+  }
+  .stage:hover .controls,
+  .controls:focus-within,
+  .controls.show {
+    opacity: 1;
+  }
+  #playPause {
+    background: none;
+    border: none;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    padding: 0;
+    flex: 0 0 auto;
+  }
+  #playPause svg {
+    width: 100%;
+    height: 100%;
+  }
+  #seek {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.3);
+    outline: none;
+    cursor: pointer;
+  }
+  #seek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+  }
+  #seek::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
   }
 </style>
 </head>
 <body>
-  <video src="logomotion.mp4" autoplay muted loop playsinline></video>
+  <div class="stage">
+    <video id="video" src="logomotion.mp4" autoplay muted loop playsinline></video>
+    <div class="controls" id="controls">
+      <button id="playPause" aria-label="재생/일시정지">
+        <svg id="playIcon" viewBox="0 0 24 24" fill="white" style="display:none">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg id="pauseIcon" viewBox="0 0 24 24" fill="white">
+          <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
+        </svg>
+      </button>
+      <input type="range" id="seek" value="0" min="0" max="100" step="0.1">
+    </div>
+  </div>
+  <script>
+    const video = document.getElementById('video');
+    const playPause = document.getElementById('playPause');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const seek = document.getElementById('seek');
+    let seeking = false;
+
+    function updateIcons() {
+      const playing = !video.paused;
+      playIcon.style.display = playing ? 'none' : 'block';
+      pauseIcon.style.display = playing ? 'block' : 'none';
+    }
+
+    function togglePlay() {
+      if (video.paused) { video.play(); } else { video.pause(); }
+      updateIcons();
+    }
+
+    playPause.addEventListener('click', togglePlay);
+    video.addEventListener('click', togglePlay);
+
+    video.addEventListener('timeupdate', () => {
+      if (!seeking && video.duration) {
+        seek.value = (video.currentTime / video.duration) * 100;
+      }
+    });
+
+    seek.addEventListener('input', () => {
+      seeking = true;
+      if (video.duration) {
+        video.currentTime = (seek.value / 100) * video.duration;
+      }
+    });
+    seek.addEventListener('change', () => { seeking = false; });
+
+    updateIcons();
+  </script>
 </body>
 </html>
