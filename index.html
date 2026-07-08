@@ -18,12 +18,15 @@
     padding: 0;
     width: 100%;
     height: 100%;
+    height: 100dvh;
     background: #000;
     overflow: hidden;
+    overscroll-behavior: none;
   }
   .stage {
     position: fixed;
     inset: 0;
+    height: 100dvh;
   }
   video {
     position: fixed;
@@ -32,6 +35,7 @@
     transform: translate(-50%, -50%);
     width: 100%;
     height: 100%;
+    height: 100dvh;
     object-fit: contain;
     cursor: pointer;
   }
@@ -43,7 +47,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 20px;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
     background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0));
     opacity: 0;
     transition: opacity 0.25s ease;
@@ -93,11 +97,28 @@
     border-radius: 50%;
     background: #fff;
   }
+  @media (hover: none) and (pointer: coarse) {
+    .controls {
+      padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    }
+    #playPause {
+      width: 34px;
+      height: 34px;
+    }
+    #seek::-webkit-slider-thumb {
+      width: 16px;
+      height: 16px;
+    }
+    #seek::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+    }
+  }
 </style>
 </head>
 <body>
-  <div class="stage">
-    <video id="video" src="logomotion.mp4" autoplay muted loop playsinline></video>
+  <div class="stage" id="stage">
+    <video id="video" src="logomotion.mp4" autoplay muted loop playsinline webkit-playsinline></video>
     <div class="controls" id="controls">
       <button id="playPause" aria-label="재생/일시정지">
         <svg id="playIcon" viewBox="0 0 24 24" fill="white" style="display:none">
@@ -112,11 +133,23 @@
   </div>
   <script>
     const video = document.getElementById('video');
+    const stage = document.getElementById('stage');
+    const controls = document.getElementById('controls');
     const playPause = document.getElementById('playPause');
     const playIcon = document.getElementById('playIcon');
     const pauseIcon = document.getElementById('pauseIcon');
     const seek = document.getElementById('seek');
     let seeking = false;
+    let hideTimer = null;
+
+    function showControls() {
+      controls.classList.add('show');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => controls.classList.remove('show'), 3000);
+    }
+
+    stage.addEventListener('touchstart', () => showControls(), { passive: true });
+    stage.addEventListener('pointerdown', () => showControls());
 
     function updateIcons() {
       const playing = !video.paused;
